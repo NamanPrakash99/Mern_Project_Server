@@ -39,6 +39,7 @@ const authController = {
         if (!token) {
             return response.status(401).json({ message: 'Uauthorized access' });
         }
+       
 
         jwt.verify(token, secret, (error, user) => {
             if (error) {
@@ -51,4 +52,4 @@ const authController = {
 
 };
 
-module.exports=authController;
+module.exports = authController;
