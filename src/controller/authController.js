@@ -28,11 +28,6 @@ const authController = {
         }
     },
 
-    logout: (request, response) => {
-        response.clearCookie('jwtToken');
-        response.json({ message: 'Logout successful' });
-    },
-
     isUserLoggedIn: (request, response) => {
         const token = request.cookies.jwtToken;
 
