@@ -1,23 +1,27 @@
-const express = require('express');   // Include the express module
-const cookieParser = require('cookie-parser'); 
-const authRoutes = require('./src/routes/authRoutes'); 
-const cors=require('cors');
+const express = require('express');
+const cookieParser = require('cookie-parser');
+const cors = require('cors');
+const authRoutes = require('./src/routes/authRoutes');
 
-const app = express();     // Instantiate express app (creating object)
+const app = express();
+const PORT = 5001;
 
-app.use(express.json()); // Middleware to convert json to javascript objects
+// Middleware
+app.use(express.json());
 app.use(cookieParser());
 
+// CORS config for frontend at localhost:5173
 const corsOption = {
-    origin: 'http://localhost:5173', 
+    origin: 'http://localhost:5173',
     credentials: true,
-}; 
-
+};
 app.use(cors(corsOption));
+
+// Routes
 app.use('/auth', authRoutes);
 
-const PORT = 5001;
-app.listen(5001, (error) => {
+// Server start
+app.listen(PORT, (error) => {
     if (error) {
         console.log('Error starting the server:', error);
     } else {
