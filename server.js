@@ -1,27 +1,32 @@
+require('dotenv').config();                          // Load environment variables from .env file
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const cors = require('cors');
 const authRoutes = require('./src/routes/authRoutes');
+const mongoose = require('mongoose');
 
-const app = express();
-const PORT = 5001;
 
-// Middleware
-app.use(express.json());
+
+mongoose.connect(process.env.MONGO_URI)
+.then(()=>console.log('MongoDB Connected'))
+.catch((error)=>console.log(error));
+
+const app = express();       // Instantiate Express application
+
+app.use(express.json());         // Middleware to covert json to javsascript object
 app.use(cookieParser());
 
-// CORS config for frontend at localhost:5173
+
 const corsOption = {
-    origin: 'http://localhost:5173',
+    origin: process.env.CLIENT_ENDPOINT,
     credentials: true,
 };
-app.use(cors(corsOption));
 
-// Routes
+app.use(cors(corsOption));
 app.use('/auth', authRoutes);
 
-// Server start
-app.listen(PORT, (error) => {
+const PORT=5001
+app.listen(5001, (error) => {
     if (error) {
         console.log('Error starting the server:', error);
     } else {
