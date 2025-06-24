@@ -1,23 +1,24 @@
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
 const Users = require('../model/Users');
-
 const secret = "e36ce1bf-800a-4eeb-8ec4-c960b66ccb46";
+const { register } = require('module');
+const { response } = require('express');
 
 const authController = {
-    login: async(request, response) => {
+    login: async (req, res) => {
         try {
-            const { username, password } = request.body;
+            const { username, password } = req.body;
 
-            // Call Database to fetch user by the email
+             // Call Database to fetch user by the email
             const data = await Users.findOne({ email: username });
             if (!data) {
-                return response.status(401).json({ message: 'Invalid Credentials' });
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
 
             const isMatch = await bcrypt.compare(password, data.password);
             if (!isMatch) {
-                return response.status(401).json({ message: 'Invalid credentials ' });
+                return res.status(401).json({ message: 'Invalid credentials' });
             }
 
             const user = {
@@ -26,37 +27,65 @@ const authController = {
                 email: data.email
             };
 
-
             const token = jwt.sign(user, secret, { expiresIn: '1h' });
 
-            response.cookie('jwtToken', token, {
+            res.cookie('jwtToken', token, {
                 httpOnly: true,
-                secure: false, // true in production with HTTPS
+                secure: false,
                 path: '/'
             });
 
-            response.json({ user, message: 'User authenticated' });
+            res.json({ user, message: 'User authenticated' });
         } catch (error) {
-            console.log(error);
-            response.status(500).json({ message: 'Internal server error' });
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
         }
     },
 
-
-    isUserLoggedIn: (request, response) => {
-        const token = request.cookies.jwtToken;
+    isUserLoggedIn: (req, res) => {
+        const token = req.cookies.jwtToken;
 
         if (!token) {
-            return response.status(401).json({ message: 'Unauthorized access' });
+            return res.status(401).json({ message: 'Unauthorized access' });
         }
 
         jwt.verify(token, secret, (error, user) => {
             if (error) {
-                return response.status(401).json({ message: 'Unauthorized access' });
+                return res.status(401).json({ message: 'Unauthorized access' });
             }
 
-            response.json({ message: 'User is logged in', user });
+            res.json({ message: 'User is logged in', user });
         });
+    },
+
+    register: async (req, res) => {
+        try {
+            //Extract atrributes from request body
+            const { username, password, name } = req.body;
+
+            // Firstly check if user already exist with the given email
+            const data = await Users.findOne({ email: username });
+            if (data) {
+                return res.status(401)
+                .json({ message: 'Account already exists with the given email' });
+            }
+
+            // Encrpyt the password before saving the record to the databse
+            const encryptedPassword = await bcrypt.hash(password, 10);
+            
+            // Create mongoose model object and set to the record values
+            const user = new Users({
+                email: username,
+                password: encryptedPassword,
+                name: name
+            });
+
+            await user.save();
+            res.status(201).json({ message: 'User registered successfully' });
+        } catch (error) {
+            console.error(error);
+            res.status(500).json({ message: 'Internal server error' });
+        }
     },
 
     logout: (req, res) => {
